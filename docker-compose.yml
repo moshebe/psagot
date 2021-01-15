@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  psagot:
+    build: .
+    environment: 
+      - PSAGOT_USERNAME=${PSAGOT_USERNAME}
+      - PSAGOT_PASSWORD=${PSAGOT_PASSWORD}
+      - PSAGOT_ACCOUNT_KEY=${PSAGOT_ACCOUNT_KEY}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - VERBOSE=true
