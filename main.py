@@ -78,8 +78,6 @@ def publish_result(content):
 
     logger.debug('content was publish on telegram successfully')
 
-
-
 def get_statistics_per_share(session, account_key):
     url = f'{BASE_URL}/Account/GetHoldings?accountKey={account_key}'
     res = session.get(url)
@@ -137,21 +135,16 @@ try:
     if not account_key:
         logger.info("no account key was supplied. don't worry, i'll try to figure it out")
 
-    auth_key = os.environ.get('AUTH_KEY')
-
     i=0
     succeeded = False
     while i < RETRIES and not succeeded:
         try:
-            auth_key = None
             if not auth_key:
                 logger.debug(f"authenticating user: '{username}'")
                 auth_key = get_auth_key(username, password)
                 session.headers.update({                
                     'Authorization': f"Bearer {auth_key}",
                 })
-                logger.info(f'auth key: {auth_key}')
-
             
             if not account_key:
                 logger.debug(f"try finding accounts keys for user: '{username}'")
@@ -165,7 +158,7 @@ try:
             logger.info(f"fetching account '{account_key}' holdings information")
             holdings_info = get_statistics_per_share(session, account_key)
             logger.info(holdings_info)
-            publish_result(f'Psagot:\n{holdings_info}')
+            publish_result(f'Psagot:\n {holdings_info}')
 
             succeeded = True
         except Exception as e:
