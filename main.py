@@ -78,9 +78,53 @@ def publish_result(content):
 
     logger.debug('content was publish on telegram successfully')
 
+
+
+def get_statistics_per_share(session, account_key):
+    url = f'{BASE_URL}/Account/GetHoldings?accountKey={account_key}'
+    res = session.get(url)
+    if res.status_code != 200:
+        raise Exception(f'unable to get account holdings, status: {res.status_code} {res.text}')
+    
+    payload = res.json()
+    logger.debug(f'got account holdings response: {payload}')
+    
+    summary = ''
+    total_cost = 0
+    total_value = 0
+
+    for holding in payload:
+        name = holding['i']
+        cost = holding['bh']
+        value = holding['bf']
+        
+        profit = (value - cost)
+        profit_precents = (profit / cost) * 100
+
+        total_cost += cost
+        total_value += value
+
+        summary += f"""share: {name}
+ balance: {value:,}
+ deposits: {cost:,.2f}
+ profit: {profit:,.2f}
+ return: {profit_precents:,.2f}%
+ ------------------
+ """
+
+    total_profit = (total_value - total_cost)
+    total_return = (total_profit / total_cost) * 100
+    summary += f"""Total:
+balance: {total_value:,}
+deposits: {total_cost:,.2f}
+profit: {total_profit:,.2f}
+return: {total_return:,.2f}%
+"""
+    return summary
+
 try:
     logger.info('starting...')
-
+    
     username = os.environ.get('PSAGOT_USERNAME')
     if not username:
         raise Exception('username was not set')
@@ -93,16 +137,22 @@ try:
     if not account_key:
         logger.info("no account key was supplied. don't worry, i'll try to figure it out")
 
+    auth_key = os.environ.get('AUTH_KEY')
+
     i=0
     succeeded = False
     while i < RETRIES and not succeeded:
         try:
-            logger.debug(f"authenticating user: '{username}'")
-            auth_key = get_auth_key(username, password)
-            session.headers.update({                
-                'Authorization': f"Bearer {auth_key}",
-            })
+            auth_key = None
+            if not auth_key:
+                logger.debug(f"authenticating user: '{username}'")
+                auth_key = get_auth_key(username, password)
+                session.headers.update({                
+                    'Authorization': f"Bearer {auth_key}",
+                })
+                logger.info(f'auth key: {auth_key}')
 
+            
             if not account_key:
                 logger.debug(f"try finding accounts keys for user: '{username}'")
                 accounts = get_accounts_keys(session)
@@ -112,11 +162,11 @@ try:
 
                 account_key = accounts[0]
 
-            logger.info(f"fetching account '{account_key}' balance")
-            balance = get_account_balance(session, account_key)
-            result = f'Psagot balance: {balance:,}'
-            logger.info(result)
-            publish_result(result)
+            logger.info(f"fetching account '{account_key}' holdings information")
+            holdings_info = get_statistics_per_share(session, account_key)
+            logger.info(holdings_info)
+            publish_result(f'Psagot:\n{holdings_info}')
+
             succeeded = True
         except Exception as e:
             logger.error(f'failed to fetch balance on retry ({i+1}/{RETRIES}) error: {e}')
