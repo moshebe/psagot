@@ -138,13 +138,12 @@ try:
     i=0
     succeeded = False
     while i < RETRIES and not succeeded:
-        try:
-            if not auth_key:
-                logger.debug(f"authenticating user: '{username}'")
-                auth_key = get_auth_key(username, password)
-                session.headers.update({                
-                    'Authorization': f"Bearer {auth_key}",
-                })
+        try:        
+            logger.debug(f"authenticating user: '{username}'")
+            auth_key = get_auth_key(username, password)
+            session.headers.update({                
+                'Authorization': f"Bearer {auth_key}",
+            })
             
             if not account_key:
                 logger.debug(f"try finding accounts keys for user: '{username}'")
