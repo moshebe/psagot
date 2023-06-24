@@ -4,7 +4,7 @@ import sys
 import os
 import time
 
-file_handler = logging.FileHandler(filename='/tmp/psagot.log')
+file_handler = logging.FileHandler(filename='/tmp/meitav.log')
 stdout_handler = logging.StreamHandler(sys.stdout)
 handlers = [file_handler, stdout_handler]
 if os.environ.get('VERBOSE'):
@@ -18,11 +18,11 @@ logging.basicConfig(
     handlers=handlers
 )
 
-logger = logging.getLogger('psagot')
+logger = logging.getLogger('meitav')
 
 session = requests.Session()
 
-BASE_URL='https://sparkpsagot.ordernet.co.il/api'
+BASE_URL='https://sparkmeitav.ordernet.co.il/api'
 RETRIES=3
 RETRY_DELAY=5
 
@@ -123,15 +123,15 @@ return: {total_return:,.2f}%
 try:
     logger.info('starting...')
     
-    username = os.environ.get('PSAGOT_USERNAME')
+    username = os.environ.get('MEITAV_USERNAME')
     if not username:
         raise Exception('username was not set')
 
-    password = os.environ.get('PSAGOT_PASSWORD')
+    password = os.environ.get('MEITAV_PASSWORD')
     if not password:
         raise Exception('password was not set')
 
-    account_key = os.environ.get('PSAGOT_ACCOUNT_KEY')
+    account_key = os.environ.get('MEITAV_ACCOUNT_KEY')
     if not account_key:
         logger.info("no account key was supplied. don't worry, i'll try to figure it out")
 
@@ -157,7 +157,7 @@ try:
             logger.info(f"fetching account '{account_key}' holdings information")
             holdings_info = get_statistics_per_share(session, account_key)
             logger.info(holdings_info)
-            publish_result(f'Psagot:\n {holdings_info}')
+            publish_result(f'Holding:\n {holdings_info}')
 
             succeeded = True
         except Exception as e:
