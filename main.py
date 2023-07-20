@@ -91,9 +91,11 @@ def get_statistics_per_share(session, account_key):
     total_cost = 0
     total_value = 0
 
-    for holding in payload:
+    for holding in payload:        
         name = holding['i']
         cost = holding['bh']
+        if cost <= 0:
+            continue
         value = holding['bf']
         
         profit = (value - cost)
