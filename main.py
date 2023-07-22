@@ -78,6 +78,15 @@ def publish_result(content):
 
     logger.debug('content was publish on telegram successfully')
 
+def get_securities(session, account_key):
+    url = f'{BASE_URL}/Account/GetAccountSecurities?accountKey={account_key}'
+    res = session.get(url)
+    if res.status_code != 200:
+        raise Exception(f'unable to get account securities, status: {res.status_code} {res.text}')
+    payload = res.json()
+    return payload['a']['a']
+
+
 def get_statistics_per_share(session, account_key):
     url = f'{BASE_URL}/Account/GetHoldings?accountKey={account_key}'
     res = session.get(url)
@@ -93,24 +102,36 @@ def get_statistics_per_share(session, account_key):
 
     for holding in payload:        
         name = holding['i']
-        cost = holding['bh']
-        if cost <= 0:
-            continue
-        value = holding['bf']
-        
-        profit = (value - cost)
-        profit_precents = (profit / cost) * 100
+        if name == 'CASH DEPOSIT':
+            logger.info(f"fetching account '{account_key}' securities information")
+            securities = get_securities(session, account_key)
+            logger.info(f"account '{account_key}' securities balance: {securities}")
 
-        total_cost += cost
-        total_value += value
+            total_value += securities
+            total_cost += securities
+            summary += f"""{name}
+    balance: {securities:,}
+    ------------------
+    """        
+        else:            
+            cost = holding['bh']
+            if cost <= 0:
+                continue
+            value = holding['bf']
+            
+            profit = (value - cost)
+            profit_precents = (profit / cost) * 100
 
-        summary += f"""share: {name}
- balance: {value:,}
- deposits: {cost:,.2f}
- profit: {profit:,.2f}
- return: {profit_precents:,.2f}%
- ------------------
- """
+            total_cost += cost
+            total_value += value
+
+            summary += f"""share: {name}
+    balance: {value:,}
+    deposits: {cost:,.2f}
+    profit: {profit:,.2f}
+    return: {profit_precents:,.2f}%
+    ------------------
+    """
 
     total_profit = (total_value - total_cost)
     total_return = (total_profit / total_cost) * 100
